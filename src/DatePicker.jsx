@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { calendarIcon, nextIcon, prevIcon } from "./svg";
 
 const monthNames = [
@@ -107,8 +107,11 @@ export const Calendar = ({
     if (selectedMonth === 1) {
       setSelectedMonth(12);
       setSelectedYear(selectedYear - 1);
+      onSetPickMonth(12);
+      onSetPickYear(pickYear - 1);
     } else {
       setSelectedMonth(selectedMonth - 1);
+      onSetPickMonth(pickMonth - 1);
     }
   };
 
@@ -116,8 +119,11 @@ export const Calendar = ({
     if (selectedMonth === 12) {
       setSelectedMonth(1);
       setSelectedYear(selectedYear + 1);
+      onSetPickMonth(1);
+      onSetPickYear(pickYear + 1);
     } else {
       setSelectedMonth(selectedMonth + 1);
+      onSetPickMonth(pickMonth + 1);
     }
   };
 
@@ -321,7 +327,10 @@ export const Calendar = ({
           <div className="controls">
             <div
               className="btn"
-              onClick={() => setSelectedYear(selectedYear - 1)}
+              onClick={() => {
+                setSelectedYear(selectedYear - 1);
+                onSetPickYear(pickYear - 1);
+              }}
             >
               {prevIcon}
             </div>
@@ -335,7 +344,10 @@ export const Calendar = ({
             </div>
             <div
               className="btn"
-              onClick={() => setSelectedYear(selectedYear + 1)}
+              onClick={() => {
+                setSelectedYear(selectedYear + 1);
+                onSetPickYear(pickYear + 1);
+              }}
             >
               {nextIcon}
             </div>
