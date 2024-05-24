@@ -17,28 +17,36 @@ const monthNames = [
 ];
 
 const isLeapYear = (year) => {
+  // leap year is divisible by 4
   if (year % 4 !== 0) {
-    if (year % 100 !== 0) return true;
-    if (year % 400 !== 0) return false;
+    // but not divisible by 100
+    if (year % 100 !== 0) {
+      // unless its divisible by 400
+      if (year % 400 !== 0) return false;
+      return true;
+    }
     return false;
   }
   return true;
 };
 
 const daysInMonths = (month, year) =>
+  // determine how many days in a specific month
   [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][
     month - 1
   ];
 
+// Zeller's congruence algorithm
 const calculateDaySatToFri = (year, month, day) => {
+  // january and february is considered as 13th and 14th month
   if (month < 3) {
     month += 12;
     year -= 1;
   }
 
+  // calculation
   const K = year % 100;
   const J = Math.floor(year / 100);
-
   const calculatedDay =
     day +
     Math.floor((13 * (month + 1)) / 5) +
@@ -47,9 +55,11 @@ const calculateDaySatToFri = (year, month, day) => {
     Math.floor(J / 4) -
     Math.floor(2 * J);
 
+  // adjust negative calculatedDay to range between 0-6
   const dayOfWeek =
     calculatedDay % 7 < 0 ? ((calculatedDay % 7) + 7) % 7 : calculatedDay % 7;
 
+  // determine start of the day
   return [
     "saturday",
     "sunday",
@@ -68,6 +78,7 @@ const calculateDecade = (currentYear) => {
   return { startOfDecade, endOfDecade };
 };
 
+// add props for DatePicker
 export const Calendar = ({
   pickView = null,
   pickYear = null,
@@ -113,11 +124,13 @@ export const Calendar = ({
   const renderYears = () => {
     const years = [];
 
+    // calculate start and end of the current year
     for (
       let year = decade.startOfDecade - 1;
       year <= decade.endOfDecade + 1;
       year++
     ) {
+      // add style for current year and selected year
       const isCurrent = currentYear === year;
       const isSelected = pickYear ? year === pickYear : year === selectedYear;
       years.push(
@@ -137,16 +150,19 @@ export const Calendar = ({
       );
     }
 
+    // render years
     return <div className="years">{years}</div>;
   };
 
   const renderMonths = () => {
+    // render months
     return (
       <div className="months">
         {monthNames.map((month, index) => {
+          // add style for current month and selected month
           const id = index + 1;
           const isSelected = pickMonth
-            ? pickMonth === id && pickYear === selectedYear
+            ? pickMonth === id && yearFromSelectedDate === selectedYear
             : selectedMonth === id && yearFromSelectedDate === selectedYear;
           const isCurrent = currentMonth === id && currentYear === selectedYear;
 
@@ -175,13 +191,16 @@ export const Calendar = ({
 
   const renderDates = () => {
     const days = [];
+    // what is the total days of current selected month and year
     const currentSelectedTotalDays = daysInMonths(selectedMonth, selectedYear);
+    // determine starting of {month}-1-{year} ranging between sat-fri
     const firstDayOfSelectedMonth = calculateDaySatToFri(
       selectedYear,
       selectedMonth,
       1
     );
 
+    // formatted days sun-sat
     const formattedDayOfTheWeek = [
       "sunday",
       "monday",
@@ -192,13 +211,17 @@ export const Calendar = ({
       "saturday",
     ];
 
+    // get total days of the previous month
     const previousMonthDays = daysInMonths(
       selectedMonth - 1 === 0 ? 12 : selectedMonth - 1,
       currentYear
     );
+    // determine how many days of the previous month is needed
     const previousDaysToAdd =
       formattedDayOfTheWeek.indexOf(firstDayOfSelectedMonth) - 1;
+    // calculate the starting date to add
     const previousDayToStart = previousMonthDays - previousDaysToAdd;
+    // previous starting date (previousDayToStart) till total days (previousMonthDays)
     for (let day = previousDayToStart; day <= previousMonthDays; day++) {
       days.push(
         <div key={`prev-${day}`} className="date text-gray">
@@ -207,7 +230,9 @@ export const Calendar = ({
       );
     }
 
+    // current month selected
     for (let day = 1; day <= currentSelectedTotalDays; day++) {
+      // add styles for current date and selected date
       const isCurrent =
         currentDay === day &&
         currentMonth === selectedMonth &&
@@ -236,6 +261,8 @@ export const Calendar = ({
       );
     }
 
+    // calculate remaining days to add using next month
+    // 7 columns * 6 rows = 42 dates need to fill up the table
     const nextMonthDaysToAdd = 42 - days.length;
     for (let day = 1; day <= nextMonthDaysToAdd; day++) {
       days.push(
@@ -245,6 +272,7 @@ export const Calendar = ({
       );
     }
 
+    // render header (su-sa) and days
     return (
       <div className="dates">
         {["su", "mo", "tue", "we", "th", "fr", "sa"].map((day) => (
@@ -259,6 +287,7 @@ export const Calendar = ({
 
   return (
     <div className="calendar">
+      {/* years view */}
       {view === "years" && (
         <>
           <div className="controls">
@@ -286,6 +315,7 @@ export const Calendar = ({
         </>
       )}
 
+      {/* months view */}
       {view === "months" && (
         <>
           <div className="controls">
@@ -314,6 +344,7 @@ export const Calendar = ({
         </>
       )}
 
+      {/* days view */}
       {view === "days" && (
         <>
           <div className="controls">
