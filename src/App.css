@@ -4,8 +4,28 @@
   text-align: center;
 }
 
+#root > :nth-child(1) {
+  margin-bottom: 20px;
+}
+
+.text-gray {
+  color: #a1a1a1;
+}
+
+.text-red {
+  color: #db3d44;
+}
+
+.text-lblue {
+  color: #6db1d4;
+}
+
 .w-10 {
   width: 10px;
+}
+
+.w-15 {
+  width: 15px;
 }
 
 .calendar {
@@ -16,6 +36,7 @@
   min-height: 205px;
   width: 215px;
   border: 1px solid #cacaca;
+  background-color: white;
 }
 
 .calendar .controls {
@@ -116,7 +137,7 @@
 .months .month div,
 .dates .date div {
   position: relative;
-  z-index: 10;
+  z-index: 2;
 }
 
 .years .year.selected div,
@@ -141,10 +162,49 @@
   cursor: default;
 }
 
-.text-gray {
-  color: #a1a1a1;
+.calendar-group {
+  position: relative;
 }
 
-.text-red {
-  color: #db3d44;
+.calendar-group .calendar-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1px solid black;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  width: 100%;
+}
+
+.calendar-group .calendar-input.focus {
+  border-color: #3399ff !important;
+}
+
+.calendar-group .calendar-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 5px;
+}
+
+.calendar-group .calendar-date {
+  font-size: 14px;
+  text-align: left;
+  width: 100%;
+  padding: 5px 5px 5px 25px;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.calendar-group .calendar-date :nth-child(n) {
+  padding: 0 3px;
+}
+
+.calendar-group .calendar-date .highlighted {
+  background-color: #3399ff;
 }

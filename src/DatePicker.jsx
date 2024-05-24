@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { nextIcon, prevIcon } from "./svg";
+import React, { useEffect, useRef, useState } from "react";
+import { calendarIcon, nextIcon, prevIcon } from "./svg";
 
 const monthNames = [
   "jan",
@@ -17,7 +17,11 @@ const monthNames = [
 ];
 
 const isLeapYear = (year) => {
-  if (year % 4 !== 0) return false;
+  if (year % 4 !== 0) {
+    if (year % 100 !== 0) return true;
+    if (year % 400 !== 0) return false;
+    return false;
+  }
   return true;
 };
 
@@ -43,6 +47,9 @@ const calculateDaySatToFri = (year, month, day) => {
     Math.floor(J / 4) -
     Math.floor(2 * J);
 
+  const dayOfWeek =
+    calculatedDay % 7 < 0 ? ((calculatedDay % 7) + 7) % 7 : calculatedDay % 7;
+
   return [
     "saturday",
     "sunday",
@@ -51,7 +58,7 @@ const calculateDaySatToFri = (year, month, day) => {
     "wednesday",
     "thursday",
     "friday",
-  ][calculatedDay % 7];
+  ][dayOfWeek];
 };
 
 const calculateDecade = (currentYear) => {
@@ -61,7 +68,17 @@ const calculateDecade = (currentYear) => {
   return { startOfDecade, endOfDecade };
 };
 
-export const Calendar = () => {
+export const Calendar = ({
+  pickView = null,
+  pickYear = null,
+  pickMonth = null,
+  pickDay = null,
+  onSetOpen = () => {},
+  onSetHighlight = () => {},
+  onSetPickYear = () => {},
+  onSetPickMonth = () => {},
+  onSetPickDay = () => {},
+}) => {
   const formattedDate = new Date().toISOString().split("T")[0];
   const [currentYear, currentMonth, currentDay] = formattedDate
     .split("-")
@@ -73,11 +90,7 @@ export const Calendar = () => {
   const [yearFromSelectedDate, monthFromSelectedDate, dayFromSelectedDate] =
     selectedDate.split("-").map(Number);
   const [decade, setDecade] = useState(calculateDecade(currentYear));
-  const [view, setView] = useState("days");
-
-  const handleSelectedDate = (year, month, date) => {
-    setSelectedDate(`${year}-${month}-${date}`);
-  };
+  const [view, setView] = useState(pickView ? pickView : "days");
 
   const handlePrevMonthChange = () => {
     if (selectedMonth === 1) {
@@ -106,15 +119,17 @@ export const Calendar = () => {
       year++
     ) {
       const isCurrent = currentYear === year;
-
+      const isSelected = pickYear ? year === pickYear : year === selectedYear;
       years.push(
         <div
           key={year}
-          className={`year ${year === selectedYear ? "selected" : ""}
+          className={`year ${isSelected ? "selected" : ""} 
           ${isCurrent ? "text-red" : ""}`}
           onClick={() => {
             setSelectedYear(year);
+            onSetPickYear(year);
             setView("months");
+            onSetHighlight("months");
           }}
         >
           <div>{year}</div>
@@ -130,8 +145,9 @@ export const Calendar = () => {
       <div className="months">
         {monthNames.map((month, index) => {
           const id = index + 1;
-          const isSelected =
-            selectedMonth === id && currentYear === selectedYear;
+          const isSelected = pickMonth
+            ? pickMonth === id && pickYear === selectedYear
+            : selectedMonth === id && yearFromSelectedDate === selectedYear;
           const isCurrent = currentMonth === id && currentYear === selectedYear;
 
           return (
@@ -142,8 +158,11 @@ export const Calendar = () => {
               
               `}
               onClick={() => {
+                setSelectedDate(`${selectedYear}-${month}-0`);
                 setSelectedMonth(id);
+                onSetPickMonth(id);
                 setView("days");
+                onSetHighlight("days");
               }}
             >
               <div>{month}</div>
@@ -194,16 +213,23 @@ export const Calendar = () => {
         currentMonth === selectedMonth &&
         currentYear === selectedYear;
 
-      const isSelected =
-        dayFromSelectedDate === day &&
-        monthFromSelectedDate === selectedMonth &&
-        yearFromSelectedDate === selectedYear;
+      const isSelected = pickDay
+        ? pickDay === day &&
+          monthFromSelectedDate === pickMonth &&
+          yearFromSelectedDate === pickYear
+        : dayFromSelectedDate === day &&
+          monthFromSelectedDate === selectedMonth &&
+          yearFromSelectedDate === selectedYear;
 
       days.push(
         <div
           key={day}
           className={`date ${isSelected ? "selected" : ""}`}
-          onClick={() => handleSelectedDate(selectedYear, selectedMonth, day)}
+          onClick={() => {
+            setSelectedDate(`${selectedYear}-${selectedMonth}-${day}`);
+            onSetPickDay(day);
+            onSetOpen(false);
+          }}
         >
           <div className={`${isCurrent ? "text-red" : ""}`}>{day}</div>
         </div>
@@ -269,7 +295,14 @@ export const Calendar = () => {
             >
               {prevIcon}
             </div>
-            <div onClick={() => setView("years")}>{selectedYear}</div>
+            <div
+              onClick={() => {
+                setView("years");
+                onSetHighlight("years");
+              }}
+            >
+              {selectedYear}
+            </div>
             <div
               className="btn"
               onClick={() => setSelectedYear(selectedYear + 1)}
@@ -287,7 +320,12 @@ export const Calendar = () => {
             <div className="btn" onClick={handlePrevMonthChange}>
               {prevIcon}
             </div>
-            <div onClick={() => setView("months")}>
+            <div
+              onClick={() => {
+                setView("months");
+                onSetHighlight("months");
+              }}
+            >
               {monthNames[selectedMonth - 1]} - {selectedYear}
             </div>
             <div className="btn" onClick={handleNextMonthChange}>
@@ -302,7 +340,62 @@ export const Calendar = () => {
 };
 
 export default function DatePicker() {
-  const [open, setOpen] = useState(false);
+  const [currentYear, currentMonth, currentDay] = new Date()
+    .toISOString()
+    .split("T")[0]
+    .split("-")
+    .map(Number);
 
-  return <div></div>;
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState("years");
+  const [pickYear, setPickYear] = useState(currentYear);
+  const [pickMonth, setPickMonth] = useState(currentMonth);
+  const [pickDay, setPickDay] = useState(currentDay);
+
+  return (
+    <div className="calendar-group">
+      <div
+        className={`calendar-input ${open ? "focus" : ""}`}
+        onClick={() => {
+          setOpen(!open);
+        }}
+      >
+        <div className={`calendar-icon ${open ? "text-lblue" : ""}`}>
+          {calendarIcon}
+        </div>
+        <div className="calendar-date ">
+          <span
+            className={`${highlight === "years" && open ? "highlighted" : ""}`}
+          >
+            {pickYear}
+          </span>
+          -
+          <span
+            className={`${highlight === "months" && open ? "highlighted" : ""}`}
+          >
+            {pickMonth}
+          </span>
+          -
+          <span
+            className={`${highlight === "days" && open ? "highlighted" : ""}`}
+          >
+            {pickDay}
+          </span>
+        </div>
+      </div>
+      <div className="calendar-comp" hidden={!open}>
+        <Calendar
+          pickView="years"
+          pickYear={pickYear}
+          pickMonth={pickMonth}
+          pickDay={pickDay}
+          onSetOpen={setOpen}
+          onSetHighlight={setHighlight}
+          onSetPickYear={setPickYear}
+          onSetPickMonth={setPickMonth}
+          onSetPickDay={setPickDay}
+        />
+      </div>
+    </div>
+  );
 }
